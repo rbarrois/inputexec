@@ -34,7 +34,10 @@ class Setup(object):
         return readers.Reader(args.device)
 
     def make_formatter(self, args):
-        return printers.PatternFormatter(args.pattern)
+        if args.out:
+            return commands.PrintingExecutor(args.out)
+        else:
+            return commands.CommandExecutor(args.actions)
 
     def make_runner(self, args):
         reader = self.make_reader(args)
