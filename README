@@ -11,7 +11,7 @@ Example usage:
 
 .. code-block:: sh
 
-    inputexec --config=actions.ini /dev/input/keyboard
+    inputexec --config=actions.ini --source-file=/dev/input/keyboard
 
 
 Installation
@@ -51,10 +51,10 @@ Then, run:
 Running
 -------
 
-inputexec takes a mandatory argument, ``device``: the ``/dev/input/`` device to read from.
+inputexec uses only optional arguments; the full list is available through ``inputexec --help``.
 
-Most configuration options can be passed either from the command line or from a configuration file.
-Please use ``inputexec --help`` to get a list of available options.
+All options may also been read from a configuration file passed as ``inputexec --config /path/to/example.ini``.
+The list of valid options for the configuration files are available through ``inputexec --dump-config``.
 
 
 Links
@@ -67,7 +67,7 @@ PyPI:
   http://pypi.python.org/pypi/inputexec
 
 Documentation:
-  http://inputexec.readthedocs.org/en/latest
+  http://inputexec.readthedocs.org/en/latest (not yet)
 
 
 .. _python-evdev: http://pythonhosted.org/evdev/
