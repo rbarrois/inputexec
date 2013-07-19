@@ -131,7 +131,7 @@ class Setup(object):
             commands = executors.read_command_map(commands_file)
 
         if args.action_mode == 'run_async':
-            return executors.AsyncExecutor(jobs=args.jobs, command_map=commands)
+            return executors.AsyncExecutor(jobs=args.action_jobs, command_map=commands)
         elif args.action_mode == 'run_sync':
             return executors.BlockingExcutor(command_map=commands)
         else:
