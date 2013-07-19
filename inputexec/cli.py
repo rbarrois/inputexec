@@ -41,6 +41,8 @@ class Setup(object):
             Arg('--mode', choices=['run_async', 'run_sync', 'print'],
                 default='print', help="Action to perform on events"),
             Arg('--jobs', type=int, default=1, help="Number of jobs to run"),
+            Arg('--commands',
+                help="Read input/command mappings from the ACTION_COMMANDS file, section [%s]" % executors.COMMANDS_SECTION),
         ]),
 
         Group('filter', "Filtering events", [
@@ -116,10 +118,18 @@ class Setup(object):
             )
 
     def make_executor(self, args):
+        if args.action_mode in ('run_sync', 'run_async'):
+            commands_file = args.action_commands or args.config
+            if not commands_file:
+                self.error(
+                    "When using run_sync/run_async executors, at least "
+                    "of --config or --action-commands must be filled.")
+            commands = executors.read_command_map(commands_file)
+
         if args.action_mode == 'run_async':
-            return executors.AsyncExecutor(args.jobs)
+            return executors.AsyncExecutor(jobs=args.jobs, command_map=commands)
         elif args.action_mode == 'run_sync':
-            return executors.BlockingExcutor()
+            return executors.BlockingExcutor(command_map=commands)
         else:
             return executors.PrintingExecutor('-',
                 end_line=args.format_endline.decode('string_escape'),

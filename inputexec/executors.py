@@ -11,6 +11,9 @@ import subprocess
 import sys
 
 
+COMMANDS_SECTION = 'commands'
+
+
 class BaseExecutor(object):
 
     def setup(self):
@@ -96,6 +99,18 @@ class TaskRunner(BaseTaskRunner):
         if p.returncode != 0:
             logger.warning("Event %s: child %d (%r) exited with code %d",
                 task.key, task.command, p.pid, p.returncode)
+
+
+def read_command_map(filename):
+    """Read a command map from a file.
+
+    Returns:
+        dict(pattern => command)
+    """
+    from .compat import configparser
+    cp = configparser.SafeConfigParser()
+    cp.read(filename)
+    return dict(cp.items(COMMANDS_SECTION))
 
 
 class BaseCommandExecutor(BaseExecutor):
