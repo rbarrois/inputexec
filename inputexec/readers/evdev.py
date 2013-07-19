@@ -35,7 +35,7 @@ def map_event(evdev_event):
     code = evdev_event.code
 
     if evdev_event.type == evdev.events.EV_SYN:
-        kind = self.EVENT_SYNC
+        kind = EVENT_SYNC
         symbol = evdev.ecodes.SYN[evdev_event.code]
 
     elif evdev_event.type == evdev.events.EV_REL:
@@ -78,6 +78,12 @@ class Filter(object):
         return event.kind in self.kinds
 
 
+def open_device(path):
+    device = evdev.InputDevice(path)
+    logger.info("Opened device %s (%s)", device.fn, device.name)
+    return device
+
+
 class EvdevReader(base.BaseReader):
     """Low-level evdev reader.
 
@@ -102,6 +108,7 @@ class EvdevReader(base.BaseReader):
     def setup(self):
         super(EvdevReader, self).setup()
         if self.exclusive:
+            logger.info("Grapping exclusive use of %s", self.device)
             self.device.grab()
 
     def convert_event(self, event):

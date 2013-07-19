@@ -113,7 +113,13 @@ def read_command_map(filename):
         dict(pattern => command)
     """
     from .compat import configparser
-    cp = configparser.SafeConfigParser()
+    class TransparentConfigParser(configparser.SafeConfigParser):
+        """A SafeConfigParser that doesn't alter option names."""
+
+        def optionxform(self, option):
+            return option
+
+    cp = TransparentConfigParser()
     cp.read(filename)
     return dict(cp.items(COMMANDS_SECTION))
 

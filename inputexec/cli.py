@@ -67,7 +67,7 @@ class Setup(object):
     def _is_evdev(self, path):
         LINUX_INPUT_DEV_MAJOR = 13
         st = os.stat(path)
-        return os.major(getattr(st, 'st_rdev', 0) == LINUX_INPUT_DEV_MAJOR)
+        return os.major(getattr(st, 'st_rdev', 0)) == LINUX_INPUT_DEV_MAJOR
 
     def setup_logging(self, args):
         if args.logging_target == 'syslog':
@@ -110,7 +110,8 @@ class Setup(object):
 
             event_filter = evdev_readers.Filter(args.filter_kinds.split(','))
             exclusive = args.source_mode == 'exclusive'
-            return evdev_readers.EvdevReader(src,
+            evdev_device = evdev_readers.open_device(src)
+            return evdev_readers.EvdevReader(evdev_device,
                 exclusive=exclusive,
                 filter=event_filter,
             )
@@ -155,6 +156,7 @@ class Setup(object):
         args = config.parse(argv[1:])
 
         runner = self.make_runner(args)
+        logger.info("Starting loop.")
         try:
             runner.loop()
         except Exception as e:  # pylint: disable=W0703

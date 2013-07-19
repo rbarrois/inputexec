@@ -117,7 +117,10 @@ class Arg(object):
         yield self.config_line()
 
     def add_to_argparse_group(self, prefix, group):
-        options = list(self.prefixed_options(prefix))
+        if prefix:
+            options = list(self.prefixed_options(prefix))
+        else:
+            options = list(self.options)
         group.add_argument(*options,
             help=self.help,
             default=self.default,
