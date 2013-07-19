@@ -5,10 +5,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import logging
+import Queue
 import threading
 import shlex
 import subprocess
 import sys
+
+
+logger = logging.getLogger(__name__)
 
 
 COMMANDS_SECTION = 'commands'
@@ -124,7 +129,7 @@ class BaseCommandExecutor(BaseExecutor):
         self.unmapped_events = set()
         super(BaseCommandExecutor, self).__init__(**kwargs)
 
-    def run_task(self, event, command):
+    def run_task(self, event):
         raise NotImplementedError()
 
     def _handle_not_found(self, key, event):
@@ -170,7 +175,7 @@ class AsyncWorker(threading.Thread):
             try:
                 self.runner.execute(task)
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 logger.exception("Error while running task %r: %s", task, e)
 
             finally:
@@ -186,7 +191,7 @@ class AsyncExecutor(BaseCommandExecutor):
 
     def setup(self):
         """Setup: start worker threads."""
-        for i in range(self.nb_jobs):
+        for _i in range(self.nb_jobs):
             thread = AsyncWorker(self.queue, self.stopped)
             thread.daemon = True
             thread.start()

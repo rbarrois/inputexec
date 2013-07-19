@@ -35,5 +35,10 @@ class Event(object):
         )
 
     def __repr__(self):
-        return 'Event(%r, %r, %r, %r)' % (self.kind, self.code, self.symbol, self.value)
+        return 'Event(%r, %r, %r, %r)' % (
+            self.kind,
+            self.code,
+            self.symbol,
+            self.value,
+        )
 

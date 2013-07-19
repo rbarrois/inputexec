@@ -30,7 +30,7 @@ EVENT_RELMOVE = 'relmove'
 EVENT_ABSMOVE = 'absmove'
 
 
-def map_event(self, evdev_event):
+def map_event(evdev_event):
 
     code = evdev_event.code
 

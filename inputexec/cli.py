@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 
 import logging
 import logging.handlers
+import os
 import sys
 
 from . import __version__
@@ -42,7 +43,8 @@ class Setup(object):
                 default='print', help="Action to perform on events"),
             Arg('--jobs', type=int, default=1, help="Number of jobs to run"),
             Arg('--commands',
-                help="Read input/command mappings from the ACTION_COMMANDS file, section [%s]" % executors.COMMANDS_SECTION),
+                help=("Read input/command mappings from the ACTION_COMMANDS file, "
+                "section [%s]" % executors.COMMANDS_SECTION)),
         ]),
 
         Group('filter', "Filtering events", [
@@ -50,9 +52,11 @@ class Setup(object):
         ]),
 
         Group('logging', "Logging", [
-            Arg('--target', help="Logging target", choices=['null', 'file', 'stderr', 'syslog'], default='stderr'),
+            Arg('--target', help="Logging target", choices=['null', 'file', 'stderr', 'syslog'],
+                default='stderr'),
             Arg('--file', help="For 'file' target, write logs to FILE"),
-            Arg('--level', help="Logging level", choices=['debug', 'info', 'warning', 'error'], default='warning'),
+            Arg('--level', help="Logging level", choices=['debug', 'info', 'warning', 'error'],
+                default='warning'),
         ]),
     ]
 
@@ -73,7 +77,7 @@ class Setup(object):
         elif args.logging_target == 'file':
             if not args.logging_file:
                 self.error("--logging-file is required for --logging-target=file")
-            handler = logging.FileHandler(logging.logging_file)
+            handler = logging.FileHandler(args.logging_file)
         else:
             handler = logging.NullHandler()
 
@@ -86,7 +90,7 @@ class Setup(object):
             'warning': logging.WARNING,
             'error': logging.ERROR,
         }
-        root_logger =logging.getLogger()
+        root_logger = logging.getLogger()
         root_logger.setLevel(level_map[args.logging_level])
         root_logger.addHandler(handler)
 
@@ -99,7 +103,7 @@ class Setup(object):
 
         if evdev:
             try:
-                from .readers import evdev
+                from .readers import evdev as evdev_readers
             except ImportError:
                 logger.error("Unable to import python-evdev, but targeting a /dev/input device.")
                 raise
@@ -153,7 +157,7 @@ class Setup(object):
         runner = self.make_runner(args)
         try:
             runner.loop()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             if args.traceback:
                 raise
             else:

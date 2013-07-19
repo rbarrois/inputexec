@@ -118,7 +118,10 @@ class Arg(object):
 
     def add_to_argparse_group(self, prefix, group):
         options = list(self.prefixed_options(prefix))
-        group.add_argument(*options, help=self.help, default=self.default, **self.extra) 
+        group.add_argument(*options,
+            help=self.help,
+            default=self.default,
+            **self.extra)
 
 
 class Options(object):
@@ -127,8 +130,9 @@ class Options(object):
 
 
 class DumpConfigAction(argparse.Action):
-    def __init__(self, option_strings, unified_parser, dest=argparse.SUPPRESS,
-            default=False, required=False, help='', **kwargs):
+    def __init__(self, option_strings, unified_parser,
+            dest=argparse.SUPPRESS, default=False, required=False, help='',
+            **kwargs):  # pylint: disable=W0622
         super(DumpConfigAction, self).__init__(option_strings, dest=dest,
                 default=default, required=required, help=help, **kwargs)
         self.unified_parser = unified_parser
