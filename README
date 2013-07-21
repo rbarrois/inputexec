@@ -125,15 +125,12 @@ Logging and debug
 inputexec provides a few options for logging, controlled by the ``--logging-target`` flag:
 
 Syslog
-
   With ``--logging-target=syslog``, all messages are sent to syslog
 
 stderr
-
   With ``--logging-target=stderr``, data is written to stderr
 
 file
-
   With ``--logging-target=file --logging-file=FILE``, logs are appended to FILE
 
 
@@ -185,7 +182,7 @@ Contributing, reporting issues
 
 If you find an issue or have suggestions for improvements, feel free to contact me:
 
-* Open an issue on `https://github.com/rbarrois/inputexec/issues <GitHub>`
+* Open an issue on `https://github.com/rbarrois/inputexec/issues <GitHub>`_
 * Send me an email at raphael.barrois+inputexec@polytechnique.org
 * Ping me on IRC, I'm Xelnor on irc.freenode.net
 
