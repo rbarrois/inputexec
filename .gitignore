@@ -4,5 +4,8 @@
 
 # Build-related
 MANIFEST
+.coverage
+*.egg-info
+*.egg
 build/
 dist/
