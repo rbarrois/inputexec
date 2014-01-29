@@ -5,7 +5,14 @@
 
 # pylint: disable=F0401,W0611
 
-try:
-    import configparser
-except ImportError:
+import sys
+
+
+if sys.version[0] == 2:
+    # Python 2
     import ConfigParser as configparser
+    import Queue as queue
+
+else:
+    import configparser
+    import queue
