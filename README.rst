@@ -60,8 +60,8 @@ Then, run:
     git clone https://github.com/rbarrois/evdev.git
 
 
-Launcing and configuration
---------------------------
+Launching and configuration
+---------------------------
 
 inputexec uses only optional arguments; the full list is available through ``inputexec --help``.
 
