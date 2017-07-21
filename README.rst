@@ -57,7 +57,7 @@ Then, run:
 
 .. code-block:: sh
 
-    git clone https://github.com/rbarrois/evdev.git
+    git clone https://github.com/rbarrois/inputexec.git
 
 
 Launching and configuration
