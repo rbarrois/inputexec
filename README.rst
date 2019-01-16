@@ -105,14 +105,16 @@ Three action modes are available, configured through ``--action-mode``:
 Input
 -----
 
-inputexec can read from stdin, from a file or from a character device.
+inputexec can read from stdin, from a file, from a character device or a directory with character devices.
 
 For stdin, simply pass ``--source-file=-``
 
 If another file path is provided, inputexec will look at its type and,
-if the file is a device node with major 13 (i.e an input device on linux),
+if the file is a device node with major 13 (i.e an input device on Linux),
 use the ``evdev`` reader.
-A linux input device can be opened either in ``shared`` mode
+If provided path is in fact a directory, inputexec will monitor it for created / deleted input devices and
+use the ``evdev`` reader for each device.
+A Linux input device can be opened either in ``shared`` mode
 (events are propagated to all other readers) or in ``exclusive`` mode;
 this behaviour is controlled by the ``--source-mode=exclusive|shared`` flag.
 

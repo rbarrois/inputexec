@@ -9,11 +9,13 @@ from __future__ import unicode_literals
 
 import evdev
 import logging
+import select
 
-from .. import events
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 from . import base
-
+from .. import events
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,18 @@ EVENT_RELMOVE = 'relmove'
 EVENT_ABSMOVE = 'absmove'
 
 
-def map_event(evdev_event):
+class Filter(object):
+    """Filters events."""
+    def __init__(self, kinds=(EVENT_KEYPRESS,), **kwargs):
+        super(Filter, self).__init__(**kwargs)
+        self.kinds = kinds
+
+    def should_send(self, event):
+        """Whether an Event should be handled."""
+        return event.kind in self.kinds
+
+
+def _map_event(evdev_event):
 
     code = evdev_event.code
 
@@ -58,7 +71,7 @@ def map_event(evdev_event):
 
         symbol = evdev.events.keys[evdev_event.code]
         if isinstance(symbol, list):
-            # More than on symbol for that code
+            # More than one symbol for that code
             symbol = symbol[0]
 
     else:
@@ -67,18 +80,7 @@ def map_event(evdev_event):
     return events.Event(kind, code, symbol, evdev_event.value)
 
 
-class Filter(object):
-    """Filters events."""
-    def __init__(self, kinds=(EVENT_KEYPRESS,), **kwargs):
-        super(Filter, self).__init__(**kwargs)
-        self.kinds = kinds
-
-    def should_send(self, event):
-        """Whether an Event should be handled."""
-        return event.kind in self.kinds
-
-
-def open_device(path):
+def _open_device(path):
     device = evdev.InputDevice(path)
     logger.info("Opened device %s (%s)", device.fn, device.name)
     return device
@@ -89,8 +91,8 @@ class EvdevReader(base.BaseReader):
 
     Handles:
     - Reading lines
-    - exclusive device access
-    - Conversion into Event.
+    - Exclusive device access
+    - Conversion into Event
 
     Attributes:
         device (evdev.InputDevice): the device to read from
@@ -99,22 +101,22 @@ class EvdevReader(base.BaseReader):
             reading
     """
 
-    def __init__(self, evdev_device, filter=None, exclusive=True, **kwargs):
+    def __init__(self, device_path, filter=None, exclusive=True, **kwargs):
         super(EvdevReader, self).__init__(**kwargs)
-        self.device = evdev_device
+        self.device = _open_device(device_path)
         self.filter = filter
         self.exclusive = exclusive
 
     def setup(self):
         super(EvdevReader, self).setup()
         if self.exclusive:
-            logger.info("Grapping exclusive use of %s", self.device)
+            logger.info("Grabbing exclusive use of %s", self.device)
             self.device.grab()
 
     def convert_event(self, event):
-        """Try to convert a evdev.events.InputEvent into an Event."""
+        """Try to convert an evdev.events.InputEvent into an Event."""
         try:
-            return map_event(event)
+            return _map_event(event)
         except UnhandledEvent:
             logger.debug("Skipping unhandled event %s", event, exc_info=True)
             return None
@@ -131,6 +133,101 @@ class EvdevReader(base.BaseReader):
                 yield event
 
     def cleanup(self):
-        if self.exclusive:
-            self.device.ungrab()
+        # closing the device also ungrabs it
+        self.device.close()
         super(EvdevReader, self).cleanup()
+
+
+class EvdevDirReader(base.BaseReader):
+    """Low-level evdev reader that captures events from devices
+    residing in a directory.
+
+    Handles:
+    - Reading lines
+    - Subscriptions to devices
+    - Exclusive device access
+    - Conversion into Event
+
+    Attributes:
+        devices (dict of str: evdev.InputDevice): devices to read from
+        dir_path (str): path to the directory
+        filter (Filter): helper to filter events at the sources
+        exclusive (bool): whether to grab exclusive hold of devices while
+            reading
+    """
+
+    class EventHandler(FileSystemEventHandler):
+        def __init__(self, reader):
+            self.reader = reader
+
+        def on_created(self, event):
+            self.reader.register_device(event.src_path)
+
+        def on_deleted(self, event):
+            self.reader.unregister_device(event.src_path)
+
+    def __init__(self, dir_path, filter=None, exclusive=True, **kwargs):
+        super(EvdevDirReader, self).__init__(**kwargs)
+        self.devices = {}
+        self.dir_path = dir_path
+        self.exclusive = exclusive
+        self.filter = filter
+        self._observer = Observer()
+        self._observer.schedule(
+            EvdevDirReader.EventHandler(self), self.dir_path
+        )
+
+    def setup(self):
+        super(EvdevDirReader, self).setup()
+        for device in evdev.util.list_devices(self.dir_path):
+            self.register_device(device)
+        self._observer.start()
+
+    def convert_event(self, event):
+        """Try to convert an evdev.events.InputEvent into an Event."""
+        try:
+            return _map_event(event)
+        except UnhandledEvent:
+            logger.debug("Skipping unhandled event %s", event, exc_info=True)
+            return None
+
+    def read(self):
+        """Read data from the evdev InputDevices.
+
+        Yields:
+            evdev.events.InputEvent
+        """
+        while True:
+            # wait for events 5s max to detect changes in the devices map
+            rlist, _, _ = select.select(
+                list(self.devices.values()), [], [], 5
+            )
+            for device in rlist:
+                # check the device is still valid in case select
+                # exited early, e.g. when the device was deleted
+                if evdev.util.is_device(device.path):
+                    for evdev_evt in device.read():
+                        evt = self.convert_event(evdev_evt)
+                        if evt is not None and self.filter.should_send(evt):
+                            yield evt
+
+    def cleanup(self):
+        self._observer.stop()
+        for device_path in list(self.devices.keys()):
+            self.unregister_device(device_path)
+        super(EvdevDirReader, self).cleanup()
+
+    def register_device(self, device_path):
+        if evdev.util.is_device(device_path):
+            logger.debug("Registering device at %s", device_path)
+            device = _open_device(device_path)
+            if self.exclusive:
+                device.grab()
+            self.devices[device_path] = device
+
+    def unregister_device(self, device_path):
+        device = self.devices.pop(device_path, None)
+        if device:
+            logger.debug("Unregistering device at %s", device_path)
+            # closing the device also ungrabs it
+            device.close()
