@@ -11,7 +11,7 @@ import shlex
 import subprocess
 import sys
 
-from .compat import queue
+import queue
 
 
 logger = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ class TaskRunner(BaseTaskRunner):
 
         if p.returncode != 0:
             logger.warning("Event %s: child %d (%r) exited with code %d",
-                task.key, task.command, p.pid, p.returncode)
+                task.key, p.pid, task.command, p.returncode)
 
 
 def read_command_map(filename):
@@ -113,7 +113,7 @@ def read_command_map(filename):
     Returns:
         dict(pattern => command)
     """
-    from .compat import configparser
+    import configparser
     class TransparentConfigParser(configparser.SafeConfigParser):
         """A SafeConfigParser that doesn't alter option names."""
 
@@ -193,7 +193,7 @@ class AsyncExecutor(BaseCommandExecutor):
     def __init__(self, jobs=1, **kwargs):
         super(AsyncExecutor, self).__init__(**kwargs)
         self.nb_jobs = jobs
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.stopped = threading.Event()
 
     def setup(self):

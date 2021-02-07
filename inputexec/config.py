@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import argparse
 import sys
 
-from .compat import configparser
+import configparser
 
 class Group(object):
     """A group of options/args.
