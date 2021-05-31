@@ -20,6 +20,24 @@ from . import loop
 logger = logging.getLogger(__name__)
 
 
+def unescape(value):
+    """Un-escape a supported value."""
+    ESCAPES = {
+        r'\0': '\0',  # Null byte
+        r'\\': '\\',  # Escaping the escape character
+        r'\a': '\a',  # Bell
+        r'\b': '\b',  # Backspace
+        r'\f': '\f',  # Form feed
+        r'\n': '\n',  # Newline
+        r'\r': '\r',  # Carriage return
+        r'\t': '\t',  # Horizontal tab
+        r'\v': '\v',  # Vertical tab
+    }
+    for source, dest in ESCAPES.items():
+        value = value.replace(source, dest)
+    return value
+
+
 class Setup(object):
     description = "Read events from an input device/stream, and run related commands."
     options = [
@@ -34,8 +52,17 @@ class Setup(object):
         ]),
 
         Group('format', "Formatting", [
-            Arg('--pattern', help="Formatting pattern", default='{kind}.{symbol}'),
-            Arg('--endline', help="End of line substring", default='\\n'),
+            Arg(
+                '--pattern',
+                help="Formatting pattern. Valid patterns are: {code}, {kind}, {symbol}, {value}.",
+                default='{kind}.{symbol}',
+            ),
+            Arg(
+                '--endline',
+                help="End of line substring. Handles standard ASCII escapes: "
+                    "\\0, \\\\, \\a, \\b, \\f, \\n, \\r, \\t, \\v",
+                default='\\n',
+            ),
         ]),
 
         Group('action', "Action", [
@@ -121,7 +148,7 @@ class Setup(object):
 
         return line_readers.LineReader(src,
             pattern=args.format_pattern,
-            end_line=args.format_endline.decode('string_escape'),
+            end_line=unescape(args.format_endline),
         )
 
     def make_executor(self, args):
@@ -139,7 +166,7 @@ class Setup(object):
             return executors.BlockingExcutor(command_map=commands)
         else:
             return executors.PrintingExecutor('-',
-                end_line=args.format_endline.decode('string_escape'),
+                end_line=unescape(args.format_endline),
             )
 
     def make_runner(self, args):
