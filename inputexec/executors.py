@@ -104,7 +104,7 @@ class TaskRunner(BaseTaskRunner):
 
         if p.returncode != 0:
             logger.warning("Event %s: child %d (%r) exited with code %d",
-                task.key, task.command, p.pid, p.returncode)
+                task.key, p.pid, task.command, p.returncode)
 
 
 def read_command_map(filename):
