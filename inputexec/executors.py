@@ -193,7 +193,7 @@ class AsyncExecutor(BaseCommandExecutor):
     def __init__(self, jobs=1, **kwargs):
         super(AsyncExecutor, self).__init__(**kwargs)
         self.nb_jobs = jobs
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.stopped = threading.Event()
 
     def setup(self):
