@@ -27,7 +27,7 @@ The ``--action-commands`` file contains action to map to each keypress:
 Installation
 ------------
 
-inputexec is distributed under the 2-clause BSD license, and needs Python 2.6-3.3
+inputexec is distributed under the 2-clause BSD license, and needs Python 2.6-3.9
 
 Distribution packages (recommended)
 """""""""""""""""""""""""""""""""""
@@ -184,7 +184,7 @@ If you find an issue or have suggestions for improvements, feel free to contact 
 
 * Open an issue on `GitHub <https://github.com/rbarrois/inputexec/issues>`_
 * Send me an email at raphael.barrois+inputexec@polytechnique.org
-* Ping me on IRC, I'm Xelnor on irc.freenode.net
+* Ping me on IRC, I'm Xelnor on irc.libera.chat
 
 
 TODO
