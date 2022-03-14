@@ -123,31 +123,33 @@ class Setup(object):
 
     def make_reader(self, args):
         src = args.source_file
-        if src == '-':
-            evdev = False
-        else:
-            evdev = self._is_evdev(src)
+        if src != '-':
+            is_dir = os.path.isdir(src)
+            if is_dir or self._is_evdev(src):
+                try:
+                    from .readers import evdev as evdev_readers
+                except ImportError:
+                    logger.error("Unable to import python-evdev, but targeting /dev/input device(s).")
+                    raise
 
-        if evdev:
-            try:
-                from .readers import evdev as evdev_readers
-            except ImportError:
-                logger.error("Unable to import python-evdev, but targeting a /dev/input device.")
-                raise
+                event_filter = evdev_readers.Filter(args.filter_kinds.split(','))
+                exclusive = args.source_mode == 'exclusive'
 
-            event_filter = evdev_readers.Filter(args.filter_kinds.split(','))
-            exclusive = args.source_mode == 'exclusive'
-            evdev_device = evdev_readers.open_device(src)
-            return evdev_readers.EvdevReader(evdev_device,
-                exclusive=exclusive,
-                filter=event_filter,
-            )
+                if is_dir:
+                    return evdev_readers.EvdevDirReader(src,
+                        exclusive=exclusive,
+                        filter=event_filter,
+                    )
+                else:
+                    return evdev_readers.EvdevReader(src,
+                        exclusive=exclusive,
+                        filter=event_filter,
+                    )
 
-        else:
-            return line_readers.LineReader(src,
-                pattern=args.format_pattern,
-                end_line=unescape(args.format_endline),
-            )
+        return line_readers.LineReader(src,
+            pattern=args.format_pattern,
+            end_line=unescape(args.format_endline),
+        )
 
     def make_executor(self, args):
         if args.action_mode in ('run_sync', 'run_async'):

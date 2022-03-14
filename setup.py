@@ -44,6 +44,7 @@ setup(
     ],
     install_requires=[
         'evdev',
+        'watchdog',
     ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
